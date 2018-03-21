@@ -1,0 +1,56 @@
+#!/bin/bash
+
+set -e
+
+if [[ "$1" == "install-version" ]]; then
+  if [[ "$2" == "" ]]; then
+    echo "helm version not specified!"
+    exit 1
+  fi
+  if [[ -f "/usr/local/bin/helm_$2/helm" ]]; then
+    echo "helm version already installed!"
+    exit 0
+  fi
+
+  curl -O https://storage.googleapis.com/kubernetes-helm/helm-v$2-$(uname -s | tr '[:upper:]' '[:lower:]')-amd64.tar.gz
+  tar -xvf helm-v$2-$(uname -s | tr '[:upper:]' '[:lower:]')-amd64.tar.gz
+  mkdir -p /usr/local/bin/helm_$2
+  sudo mv "$(uname -s | tr '[:upper:]' '[:lower:]')-amd64/helm" "/usr/local/bin/helm_$2/helm"
+  rm -rf "$(uname -s | tr '[:upper:]' '[:lower:]')-amd64"
+  rm helm-v$2-$(uname -s | tr '[:upper:]' '[:lower:]')-amd64.tar.gz
+  echo "helm v$2 installed"
+  exit 0
+fi
+
+if [[ "$1" == "versions" ]]; then
+  helm_versions=($(find "/usr/local/bin" -name "helm_$helm_version*" -type d -exec basename '{}' \;))
+  for version in "${helm_versions[@]}";
+    do
+      echo $version
+  done
+  exit 0
+fi
+
+helm_version=${HELM_VERSION:-'2.6.1'}
+if [[ -f "$(pwd)/.helm_version" ]]; then
+  helm_version=$(cat .helm_version)
+  echo "helm version overriden by file"
+fi
+
+if [[ "$helm_version" == "" ]]; then
+  echo "helm version has not been set by environment variable (TERRAFORM_VERSION) or file (.helm_version)"
+  exit 1
+fi
+
+# install specified helm version if it does not exist
+if [ ! -d "/usr/local/bin/helm_$helm_version" ]; then
+  echo "helm v$helm_version has not been installed. Install using: helm install-version $helm_version"
+  exit 1
+fi
+
+helm_versions=($(find "/usr/local/bin" -name "helm_$helm_version*" -type d -exec basename '{}' \;))
+helm_version="${helm_versions[@]:(-1)}"
+helm_path="/usr/local/bin/$helm_version/helm"
+
+echo "Using $helm_version..."
+$helm_path $@
