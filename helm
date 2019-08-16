@@ -38,7 +38,7 @@ if [[ -f "$(pwd)/.helm_version" ]]; then
 fi
 
 if [[ "$helm_version" == "" ]]; then
-  echo "helm version has not been set by environment variable (TERRAFORM_VERSION) or file (.helm_version)"
+  echo "helm version has not been set by environment variable (HELM_VERSION) or file (.helm_version)"
   exit 1
 fi
 
